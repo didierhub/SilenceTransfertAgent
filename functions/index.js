@@ -7,18 +7,18 @@ exports.createUser = functions.https.onCall(async (data, context) => {
   // Check if the request is authenticated and the user is an admin
   if (!context.auth || !context.auth.token.isAdmin) {
     throw new functions.https.HttpsError(
-        "permission-denied",
-        "Only admins can create users.",
+        "permission-denied", "Only admins can create users.",
     );
   }
-
-  const {email,
+  const {
+    email,
     phoneNumber,
     emailVerified,
     password,
     displayName,
     photoURL,
-    disabled} = data;
+    disabled,
+  } = data;
 
   try {
     // Create the user using Firebase Authentication
@@ -34,12 +34,13 @@ exports.createUser = functions.https.onCall(async (data, context) => {
 
     // Optionally, set custom claims for the user (if needed)
 
-    return {success: true, uid: userRecord.uid};
+    return {
+      success: true,
+      uid: userRecord.uid,
+    };
   } catch (error) {
     throw new functions.https.HttpsError(
-        "unknown",
-        "Error creating user",
-        error,
+        "unknown", "Error creating user", error,
     );
   }
 });
@@ -48,8 +49,7 @@ exports.updateUser = functions.https.onCall(async (data, context) => {
   // Check if the request is authenticated and the user is an admin
   if (!context.auth || !context.auth.token.isAdmin) {
     throw new functions.https.HttpsError(
-        "permission-denied",
-        "Only admins can update users.",
+        "permission-denied", "Only admins can update users.",
     );
   }
 
@@ -75,13 +75,27 @@ exports.updateUser = functions.https.onCall(async (data, context) => {
       disabled,
     });
     console.log("Successfully updated user", userRecord.toJSON());
-    return {success: true, userRecord: userRecord.toJSON()};
+    return {
+      success: true,
+      userRecord: userRecord.toJSON(),
+    };
   } catch (error) {
     console.log("Error updating user:", error);
     throw new functions.https.HttpsError(
-        "unknown",
-        "Error updating user",
-        error,
+        "unknown", "Error updating user", error,
     );
   }
+});
+
+exports.makeAdmin = functions.https.onCall((data, context) => {
+  return admin.auth().getUserByEmail(data.email).then((user) => {
+    return admin.auth().setCustomUserClaims(user.uid, {admin: true})
+        .then(()=>{
+          return {
+            message: `${data.email} is now an admin`,
+          };
+        }).catch((error) =>{
+          return error;
+        });
+  });
 });
