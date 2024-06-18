@@ -50,11 +50,7 @@ export const ProviderUserContext = ({ children }) => {
     return signOut(Auth);
   };
 
-  //creat agent
-// Create user by admin
-const CreateAgent = (email, password) => {
-  return  createUserWithEmailAndPassword(Auth,email,password)
-};
+  
 
 //upload userphoto
 const UploadUserPhoto = (userId, image, FolderName) => {
@@ -147,6 +143,14 @@ const UpdateAgent=()=>{
       second: 'numeric',
     }).format(date);
   };
+//creat agent initial balance
+const createBalance = (documentName, customId,data,) => {
+  const collectionRef = collection(db, `${documentName}`);
+  setDoc(doc(collectionRef, customId), {
+    ...data,
+    createdAt: serverTimestamp(), // Include createdAt with server timestamp
+  });
+};
   return (
     // context provider
     <UserAuthContext.Provider
@@ -155,13 +159,13 @@ const UpdateAgent=()=>{
         isAdmin,
         UserLogInWithEmailAndPassword,
          UserLogInWithGoogle,
-         CreateAgent,
           DeleteAgent,
           UpdateAgent, 
           UserSignOUt,
           UploadUserPhoto,
           uploadUserInfo,
-          formatDate  }}
+          formatDate,
+          createBalance}}
     >
       {children}
     </UserAuthContext.Provider>

@@ -13,7 +13,8 @@ function Receive() {
   const { user } = UserHook();
   const [transfers, setTransfers] = useState([]);
   const collectionName = "receives";
-  const{formatDate}=TransactionHook()
+  const AgentId=user.uid
+  const{formatDate,useFirestoreQuery}=TransactionHook()
 
   useEffect(() => {
     const collectionRef = collection(db,collectionName);
@@ -36,7 +37,7 @@ function Receive() {
 
     // Cleanup the listener on unmount
     return () => unsubscribe();
-  }, [user.uid]);
+  }, [AgentId]);
 
  
   return (

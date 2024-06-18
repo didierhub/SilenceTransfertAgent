@@ -1,5 +1,5 @@
 import { Auth,db,Storage } from "../firebase/FireBaseConfig";
-import { collection, addDoc, serverTimestamp, } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp,query } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { createContext,useEffect,useState } from "react";
 import UserHook from "../hooks/UserHook";
@@ -17,6 +17,7 @@ const CreatTransaction=(data,documentName)=>{
         createdAt: serverTimestamp(), // Include createdAt with server timestamp
       }); 
 }
+
 
 
 
@@ -56,6 +57,34 @@ useEffect(() => {
 return{transactiondata}
 
 }
+
+const useFirestoreQuery = (collectionName, whereClause, orderByClause) => {
+  const [data, setData] = useState([]);
+  const {user}=UserHook(); // Assuming you have a UserContext
+
+  useEffect(() => {
+    const collectionRef = collection(db, collectionName);
+    const q = query(collectionRef, whereClause, orderByClause);
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        const createdAt = data.createdAt ? data.createdAt.toDate() : null; // Convert Firestore Timestamp to JavaScript Date
+        return {
+          id: doc.id,
+          ...data,
+          createdAt,
+        };
+      });
+      setData(data);
+    });
+
+    // Cleanup the listener on unmount
+    return () => unsubscribe();
+  }, [user.uid]);
+
+  return data;
+};
 
 
 
@@ -130,7 +159,7 @@ const UploadProof = (image, userId, FolderName) => {
 
 
     return(
-        <TransactionContext.Provider value={{CreatTransaction,UploadProof,fetchData,formatDate}}>
+        <TransactionContext.Provider value={{CreatTransaction,UploadProof,fetchData,formatDate,useFirestoreQuery}}>
           {children}
         </TransactionContext.Provider>
     )

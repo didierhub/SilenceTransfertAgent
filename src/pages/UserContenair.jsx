@@ -68,14 +68,22 @@ function UserContenair() {
                 <input type="checkbox" name="" id="" />
               </div>
               <div className=" overflow-hidden">{agent.id}</div>
-              <div className="flex justify-center items-center gap-2">
-                <img
-                  src={agent.image}
-                  className="h-10 rounded-full w-10 object-cover"
-                  alt=""
-                />
-                {agent.AgentId}{" "}
-              </div>
+             
+              <div className=" grid grid-cols-2 items-center   ">
+             
+             < img src={agent.image}
+                className="h-10 rounded-full w-10 object-cover flex  "
+                alt=""
+              />
+           
+           
+             <span className=" ">{agent.AgentId}</span>
+            
+              
+            </div>
+            
+
+             
               <div>{agent.displayName}</div>
               <div>{agent.city}</div>
               <div>{agent.phone}</div>

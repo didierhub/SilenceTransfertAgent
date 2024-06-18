@@ -12,6 +12,7 @@ function Review() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const collectionName = "balances";
+  
 
   useEffect(() => {
     if (!user || !user.uid) return;
@@ -57,7 +58,7 @@ function Review() {
           <h1 className="text-xl font-semibold text-blue-400  flex items-center justify-center gap-5">  <span className="h-1 w-9 bg-blue-400 "></span>{balanceItem.id}
           <span className="h-1 w-9 bg-blue-400 "></span>
           </h1>
-          <div className="font-semibold">Balance:  ${balanceItem.balance}</div>
+          <div className="font-semibold">Balance:  ${balanceItem.Balance}</div>
         </div>
       ))}
       </div>

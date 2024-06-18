@@ -1,22 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import TransactionHook from "../hooks/TransactionHook";
 import UserHook from "../hooks/UserHook";
-// Ensure you have this import
 import { db } from "../firebase/FireBaseConfig";
-import { doc, runTransaction, addDoc, collection } from 'firebase/firestore'; // Ensure you have these imports
+import { doc, runTransaction, addDoc, collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
 
 function TransfertForm() {
   const { user } = UserHook();
   const { CreatTransaction } = TransactionHook();
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const AgentId = user.uid;
+  const BalanceCollectionName = "balances";
+  const [balance, setBalance] = useState([]);
+  const [AgentSenderId, setAgentSenderId] = useState("");
+
+  useEffect(() => {
+    if (!user || !AgentId) return;
+
+    const collectionRef = collection(db, BalanceCollectionName);
+    const q = query(collectionRef, where("AgentId", "==", AgentId));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      try {
+        const transfersData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          const createdAt = data.createdAt ? data.createdAt.toDate() : null;
+          return {
+            id: doc.id,
+            ...data,
+            createdAt,
+          };
+        });
+
+        setAgentSenderId(transfersData[0].id);
+        setBalance(transfersData);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching data: ", err);
+        setError(err);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
   const [formData, setFormData] = useState({
     amount: "",
     reason: "",
     AgentReceiverId: "",
-    AgentSenderId: ""
   });
 
   const handleChange = (e) => {
@@ -27,31 +61,26 @@ function TransfertForm() {
     }));
   };
 
-
-  //to creat transfert
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { amount, reason, AgentReceiverId, AgentSenderId } = formData;
+    const { amount, reason, AgentReceiverId } = formData;
     const transferAmount = parseFloat(amount);
 
-    // Ensure you have validation here as necessary
     if (isNaN(transferAmount) || transferAmount <= 0) {
       alert('Please enter a valid amount.');
       return;
     }
 
     try {
-      // Perform the balance transfer
       await transferBalance(AgentSenderId, AgentReceiverId, transferAmount);
 
-      // Log the transfer in the transfers collection
       await CreatTransaction(
-        { AgentSenderId, AgentReceiverId, amount: transferAmount, reason,AgentId },
+        { AgentSenderId, AgentReceiverId, amount: transferAmount, reason, AgentId },
         "transfers"
       );
       console.log("Transfer created successfully");
-      // Optionally, you could reset the form here
-      setFormData({ amount: "", reason: "", AgentReceiverId: "", AgentSenderId: "" });
+      setFormData({ amount: "", reason: "", AgentReceiverId: "" });
       navigate("/Transaction/Transfert");
     } catch (error) {
       console.error("Error creating transfer:", error);
@@ -60,8 +89,8 @@ function TransfertForm() {
   };
 
   const transferBalance = async (AgentSenderId, AgentReceiverId, amount) => {
-    const fromAgentRef = doc(db, 'balances', AgentSenderId);
-    const toAgentRef = doc(db, 'balances', AgentReceiverId);
+    const fromAgentRef = doc(db, BalanceCollectionName, AgentSenderId);
+    const toAgentRef = doc(db, BalanceCollectionName, AgentReceiverId);
 
     try {
       await runTransaction(db, async (transaction) => {
@@ -72,17 +101,15 @@ function TransfertForm() {
           throw new Error("One or both balances do not exist.");
         }
 
-        const fromAgentBalance = fromAgentDoc.data().balance;
-        const toAgentBalance = toAgentDoc.data().balance;
+        const fromAgentBalance = fromAgentDoc.data().Balance;
+        const toAgentBalance = toAgentDoc.data().Balance;
 
         if (fromAgentBalance < amount) {
           throw new Error("Insufficient balance for the transfer.");
         }
 
-        // Perform the balance transfer
-        transaction.update(fromAgentRef, { balance: fromAgentBalance - amount });
-        transaction.update(toAgentRef, { balance: toAgentBalance + amount });
-
+        transaction.update(fromAgentRef, { Balance: fromAgentBalance - amount });
+        transaction.update(toAgentRef, { Balance: toAgentBalance + amount });
       });
 
       alert('Transfer successful');
@@ -134,7 +161,7 @@ function TransfertForm() {
             className="shadow-md rounded-md"
           />
         </div>
-        <div className="grid gap-2">
+        {/* <div className="grid gap-2">
           <label htmlFor="AgentSenderId" className="text-gray-500 text-sm">
             Agent Sender ID
           </label>
@@ -146,7 +173,7 @@ function TransfertForm() {
             onChange={handleChange}
             className="shadow-md rounded-md"
           />
-        </div>
+        </div> */}
 
         <div className="grid">
           <button
@@ -157,7 +184,7 @@ function TransfertForm() {
           </button>
         </div>
         <div>{error && <span>{error}</span>}</div>
-        {console.log(formData)}
+       
       </form>
     </div>
   );

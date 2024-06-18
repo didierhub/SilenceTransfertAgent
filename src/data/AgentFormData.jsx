@@ -69,12 +69,22 @@ const agentInputform = (formData, handleInputChange, handleFileChange) => [
     onChange: handleInputChange,
   },
   {
+    label: "Balance",
+    id: "Balance",
+    type:"number",
+    required: true,
+    placeholder:"1000",
+    value: formData.balance,
+    onChange: handleInputChange,
+  },
+  {
     label: "Image",
     id: "image",
     type: "file",
     required: true,
     onChange: handleFileChange,
   },
+  
   
 ];
 

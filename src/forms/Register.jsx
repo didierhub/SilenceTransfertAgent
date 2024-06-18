@@ -7,7 +7,7 @@ import { createUser } from "../firebase/FireBaseConfig";
 
 function Register() {
   
-  const { UploadUserPhoto, uploadUserInfo, CreateAgent,isAdmin } = UserHook();
+  const { UploadUserPhoto, uploadUserInfo,isAdmin,createBalance } = UserHook();
   const [error, setError] = useState(null);
   const [message,setMessage]=useState("")
   const [formData, setFormData] = useState({
@@ -19,10 +19,12 @@ function Register() {
     password: "",
     address: "",
     city: "",
+    Balance:0,
   });
 
   const [previewImage, setPreviewImage] = useState(null);
   const collectionName = "agentInfo";
+  const BalanceCollection="balances"
   const storageName = "agentProfileImage";
   const navigate = useNavigate();
 
@@ -68,6 +70,10 @@ function Register() {
         ...formData,
         image: photoURL,
       });
+           await createBalance(BalanceCollection, formData.AgentId,{
+            Balance: parseFloat(formData.Balance),
+            AgentId :newUser
+           })
       navigate("/Users");
     } catch (err) {
       setError(err.message);
