@@ -3,7 +3,7 @@ import { initializeApp, } from "firebase/app";
 import { getAuth ,GoogleAuthProvider} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 
 
@@ -22,9 +22,15 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const Auth=getAuth(app)
-const db=getFirestore(app)
-const Storage=getStorage(app)
-const Provider= new GoogleAuthProvider()
-// const createUserFunction = firebase.functions().httpsCallable('createUser');
-export{Auth,db,Provider,Storage}
+const Auth = getAuth(app); // Authentication instance
+const db = getFirestore(app); // Firestore instance
+const Storage = getStorage(app); // Storage instance
+const Provider = new GoogleAuthProvider(); // Google Auth provider
+
+// Initialize Cloud Functions
+const functions = getFunctions(app, 'us-central1'); // Replace 'us-central1' with your region
+const createUser = httpsCallable(functions, 'createUser');
+const updateUser = httpsCallable(functions, 'updateUser');
+const makeAdmin = httpsCallable(functions, 'makeAdmin');
+
+export { Auth, db, Provider, Storage, createUser, updateUser, makeAdmin };

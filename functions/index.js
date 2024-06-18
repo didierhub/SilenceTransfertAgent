@@ -5,30 +5,28 @@ admin.initializeApp();
 
 exports.createUser = functions.https.onCall(async (data, context) => {
   // Check if the request is authenticated and the user is an admin
-  if (!context.auth || !context.auth.token.isAdmin) {
+  if (context.auth.token.admin !==true) {
     throw new functions.https.HttpsError(
-        "permission-denied", "Only admins can create users.",
+        "permission-denied", "Only admins can creat users.",
     );
   }
   const {
     email,
-    phoneNumber,
-    emailVerified,
     password,
+    phoneNumber,
     displayName,
-    photoURL,
+    emailVerified,
     disabled,
   } = data;
 
   try {
     // Create the user using Firebase Authentication
-    const userRecord = await admin.auth().createUser({
+    const userRecord= await admin.auth().createUser({
       email,
-      phoneNumber,
-      emailVerified,
       password,
+      phoneNumber,
       displayName,
-      photoURL,
+      emailVerified,
       disabled,
     });
 
@@ -47,31 +45,24 @@ exports.createUser = functions.https.onCall(async (data, context) => {
 
 exports.updateUser = functions.https.onCall(async (data, context) => {
   // Check if the request is authenticated and the user is an admin
-  if (!context.auth || !context.auth.token.isAdmin) {
+  if (context.auth.token.admin !==true) {
     throw new functions.https.HttpsError(
-        "permission-denied", "Only admins can update users.",
+        "permission-denied", "Only admins can creat users.",
     );
   }
-
   const {
     uid,
     email,
-    phoneNumber,
     emailVerified,
     password,
-    displayName,
-    photoURL,
     disabled,
   } = data;
 
   try {
     const userRecord = await admin.auth().updateUser(uid, {
       email,
-      phoneNumber,
       emailVerified,
       password,
-      displayName,
-      photoURL,
       disabled,
     });
     console.log("Successfully updated user", userRecord.toJSON());
@@ -88,6 +79,11 @@ exports.updateUser = functions.https.onCall(async (data, context) => {
 });
 
 exports.makeAdmin = functions.https.onCall((data, context) => {
+  if (context.auth.token.admin !==true) {
+    throw new functions.https.HttpsError(
+        "permission-denied", "Only admins can creat users.",
+    );
+  }
   return admin.auth().getUserByEmail(data.email).then((user) => {
     return admin.auth().setCustomUserClaims(user.uid, {admin: true})
         .then(()=>{

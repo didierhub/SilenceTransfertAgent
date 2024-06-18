@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useState,  useEffect } from "react";
 import { agentInputform } from "../data/AgentFormData";
 import UserHook from "../hooks/UserHook";
 import { useNavigate } from "react-router-dom";
 import { FormInput, FormTextarea, SelectInput } from "./formInputAndTextArea";
+import { createUser } from "../firebase/FireBaseConfig";
 
 function Register() {
-  const { UploadUserPhoto, uploadUserInfo, CreateAgent } = UserHook();
+  
+  const { UploadUserPhoto, uploadUserInfo, CreateAgent,isAdmin } = UserHook();
   const [error, setError] = useState(null);
+  const [message,setMessage]=useState("")
   const [formData, setFormData] = useState({
     image: null,
     AgentId: "",
@@ -17,8 +20,8 @@ function Register() {
     address: "",
     city: "",
   });
-  const [previewImage, setPreviewImage] = useState(null);
 
+  const [previewImage, setPreviewImage] = useState(null);
   const collectionName = "agentInfo";
   const storageName = "agentProfileImage";
   const navigate = useNavigate();
@@ -42,10 +45,24 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isAdmin) {
+        setMessage("Only admins can create users.");
+        alert(message)
+        return;
+      }
     try {
-      const userCredential = await CreateAgent(formData.email, formData.password);
-      const newUser = userCredential.user;
-      const AgentId = newUser.uid;
+     
+      const userCredential = await createUser({
+        email: formData.email,
+        password: formData.password,
+        phoneNumber:formData.phone,
+        displayName:formData.displayName,
+        emailVerified: false,
+        disabled: false,
+      });
+      const newUser = userCredential.data.uid;
+      console.log(newUser)
+      const AgentId = newUser;
       const photoURL = await UploadUserPhoto(AgentId, formData.image, storageName);
       await uploadUserInfo(AgentId, collectionName, {
         ...formData,

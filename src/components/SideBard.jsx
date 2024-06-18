@@ -10,7 +10,7 @@ import UserHook from '../hooks/UserHook';
 
 
 function SideBard() {
-  const {user,UserSignOUt}=UserHook()
+  const {user,UserSignOUt,isAdmin}=UserHook()
   const navigate=useNavigate()
 
   const handleLogout=async()=>{
@@ -32,7 +32,7 @@ function SideBard() {
             <div className='grid  pt-2 w-full'>
             <span  className= '  text-gray-500 translate-x-[-50%] letf-[50%] absolute  flex justify-start '>Menu</span>
             <NavLink  to="/" className='   flex  items-center gap-5'><FaHome  size={30}/> home </NavLink>
-             <NavLink to="Users"  className='flex  items-center gap-5'> < FaUsers  size={30} />users</NavLink>
+             {isAdmin&&<NavLink to="Users"  className='flex  items-center gap-5'> < FaUsers  size={30} />users</NavLink>}
              <NavLink   to="Transaction"className='flex items-center gap-5'><GrTransaction size={30} /> transaction</NavLink>
             </div>
             

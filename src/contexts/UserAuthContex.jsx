@@ -16,12 +16,21 @@ export const UserAuthContext = createContext();
 
 export const ProviderUserContext = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(Auth, (currentUser) => {
-      return setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(Auth, async (currentUser) => {
+      if (currentUser) {
+        const token = await currentUser.getIdTokenResult();
+        setIsAdmin(!!token.claims.admin);
+        
+        setUser(currentUser);
+      } else {
+        setIsAdmin(false);
+        setUser(null);
+      }
     });
-    return () => unsubscribe;
+    return () => unsubscribe();
   }, []);
 
   //log in with password and email
@@ -141,7 +150,9 @@ const UpdateAgent=()=>{
   return (
     // context provider
     <UserAuthContext.Provider
-      value={{ user,
+      value={{ 
+        user,
+        isAdmin,
         UserLogInWithEmailAndPassword,
          UserLogInWithGoogle,
          CreateAgent,
