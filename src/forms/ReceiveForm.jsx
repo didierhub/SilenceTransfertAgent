@@ -1,78 +1,127 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import TransactionHook from "../hooks/TransactionHook";
 import UserHook from "../hooks/UserHook";
-import { useNavigate } from "react-router-dom";
+import { doc, updateDoc, where, orderBy } from 'firebase/firestore';
+import { db } from "../firebase/FireBaseConfig";
+import { receiveInputFields } from "../data/inputFields";
+import { FormInput, FormTextarea, SelectInput } from "./formInputAndTextArea";
 
 function ReceiveForm() {
+  const { CreatTransaction, UploadProof, useFirestoreQuery } = TransactionHook();
   const { user } = UserHook();
-  const { CreatTransaction, UploadProof } = TransactionHook();
-  const [error, setError] = useState(null);
-  const [image, setImage] = useState(null);
-  const [ reason, setReason] = useState("");
+  const [AgentBalanceId, setAgentBalanceId] = useState("");
+  const [balance, setBalance] = useState(0); // Track the current balance
+  const [errorReceive, setErrorReceive] = useState(null);
+  const [formData, setFormData] = useState({
+    amountTogive:0,
+    receiverName: '',
+    phoneNumber: '',
+    email: '',
+    receivedMethod: '',
+    paymentMethod: '',
+    image: null,
+    withdrawMethod: '',
+    bankDetails: { ibam: '', accountName: '', bank: '' },
+  });
+
+  const collectionName = "receives";
+  const BalanceCollectionName = "balances";
+  const storageName = "receiveFolder";
   const navigate = useNavigate();
   const AgentId = user.uid;
-  const collectionName = "receives";
-  const storageName = "receiveFolder";
+  const whereClause = where('AgentId', '==', AgentId);
+  const orderByClause = orderBy('createdAt', 'desc');
+
+  const { data, loading, error } = useFirestoreQuery(
+    BalanceCollectionName,
+    whereClause,
+    undefined,
+    AgentId
+  );
+
+  useEffect(() => {
+    if (data && data.length > 0) {
+      setAgentBalanceId(data[0].id);
+      setBalance(data[0].Balance); 
+    }
+  }, [data]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const { receiverName, phoneNumber, email, receivedMethod, paymentMethod, withdrawMethod, bankDetails,amountTogive } = formData;
+
     try {
-      const photoURL = image ? await UploadProof(image, AgentId, storageName) : null;
-      await CreatTransaction({ reason, AgentId, photoURL }, collectionName);
-      // Reset form after successful submission
-      setImage(null);
-      setReason("");
-      setError(null);
-      alert("successed")
-     navigate("/Transaction/Receive")
+      const photoURL = formData.image ? await UploadProof(formData.image, AgentId, storageName) : null;
+
+      // Create the transaction after the image upload is complete
+      const transactionData = {
+        receiverName,
+        phoneNumber,
+        email,
+        amountTogive,
+        receivedMethod,
+        paymentMethod,
+        withdrawMethod,
+        bankDetails,
+        photoURL,
+        AgentId,
+      };
+      await CreatTransaction(transactionData, collectionName);
+      const AgentBalanceRef = doc(db, BalanceCollectionName, AgentBalanceId);
+      await updateDoc(AgentBalanceRef, { Balance: balance - amountTogive }); // Deduct the totalAmount
+      // Reset form fields
+      setFormData({
+        amountTogive:0,
+        receiverName: '',
+        phoneNumber: '',
+        email: '',
+        receivedMethod: '',
+        paymentMethod: '',
+        image: null,
+        withdrawMethod: '',
+        bankDetails: { ibam: '', accountName: '', bank: '' },
+      });
+      
+      setErrorReceive(null);
+
+      // Navigate to the receive page
+      navigate("/Transaction/Receive");
+      alert("Received successfully");
     } catch (error) {
-      console.error(error.message);
-      setError(error.message);
+      console.error("Error creating receive:", error);
+      setErrorReceive(error.message);
     }
   };
 
-  const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
-  };
-
   return (
-    <div className="grid justify-center">
-      <form className="grid gap-3 w-[350px] h-[300px]" onSubmit={handleSubmit}>
-        <div className="grid gap-2">
-          <label htmlFor="image" className="text-gray-500 text-sm">
-            Amount to transfer
-          </label>
-          <input
-            type="file"
-            id="image"
-            required
-            className="shadow-md rounded-md"
-            onChange={handleImageChange}
-          />
-        </div>
-        <div className="grid gap-2">
-          <label htmlFor="raison" className="text-gray-500 text-sm">
-            Raison
-          </label>
-          <textarea
-            id="raison"
-            required
-            className="shadow-md rounded-md"
-            rows={8}
-            onChange={(e) =>setReason(e.target.value)}
-            value={reason}
-          ></textarea>
-        </div>
+    <div className="grid justify-center relative">
+      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3 w-[80%]  h-auto absolute left-[50%] translate-x-[-50%] overflow-x-scroll">
+        {receiveInputFields(formData, setFormData).map((field) => {
+          if (field.type === "textarea") {
+            return <FormTextarea key={field.id} {...field} />;
+          } else if (field.type === "select") {
+            return <SelectInput key={field.id} {...field} />;
+          } else {
+            return <FormInput key={field.id} {...field} />;
+          }
+        })}
+        
         <div className="grid">
           <button
             type="submit"
             className="px-3 py-1 bg-green-500 hover:scale-105 shadow-md rounded-md text-white font-semibold"
           >
-            Send
+            Receive
           </button>
         </div>
-        {error && <div>{error}</div>}
+        {errorReceive && <div className="text-red-500">{errorReceive}</div>}
       </form>
+      {formData.image && (
+        <div className="w-[150px] absolute left-[10%]">
+          <img src={URL.createObjectURL(formData.image)} alt="Preview" className="relative" />
+        </div>
+      )}
     </div>
   );
 }

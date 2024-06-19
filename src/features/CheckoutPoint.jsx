@@ -1,6 +1,6 @@
 import {Auth,db} from '../firebase/FireBaseConfig'
 import { collection, addDoc, onSnapshot } from "firebase/firestore";
-import UserHook from '..//hooks/UserHook'
+import UserHook from '../hooks/UserHook'
 
 
 export async function createCheckoutSession() {

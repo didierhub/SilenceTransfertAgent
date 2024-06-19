@@ -3,49 +3,30 @@ import { useNavigate } from "react-router-dom";
 import TransactionHook from "../hooks/TransactionHook";
 import UserHook from "../hooks/UserHook";
 import { db } from "../firebase/FireBaseConfig";
-import { doc, runTransaction, addDoc, collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { doc, runTransaction,  where,  } from 'firebase/firestore';
 
 function TransfertForm() {
   const { user } = UserHook();
-  const { CreatTransaction } = TransactionHook();
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { CreatTransaction, useFirestoreQuery } = TransactionHook();
+ 
   const navigate = useNavigate();
   const AgentId = user.uid;
   const BalanceCollectionName = "balances";
-  const [balance, setBalance] = useState([]);
   const [AgentSenderId, setAgentSenderId] = useState("");
+  const whereClause = where('AgentId', '==', AgentId);
+
+  const { data, loading, error } = useFirestoreQuery(
+    BalanceCollectionName,
+    whereClause,
+    undefined,
+    AgentId
+  );
 
   useEffect(() => {
-    if (!user || !AgentId) return;
-
-    const collectionRef = collection(db, BalanceCollectionName);
-    const q = query(collectionRef, where("AgentId", "==", AgentId));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      try {
-        const transfersData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          const createdAt = data.createdAt ? data.createdAt.toDate() : null;
-          return {
-            id: doc.id,
-            ...data,
-            createdAt,
-          };
-        });
-
-        setAgentSenderId(transfersData[0].id);
-        setBalance(transfersData);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching data: ", err);
-        setError(err);
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [user]);
+    if (data && data.length > 0) {
+      setAgentSenderId(data[0].id);
+    }
+  }, [data]);
 
   const [formData, setFormData] = useState({
     amount: "",
@@ -61,7 +42,6 @@ function TransfertForm() {
     }));
   };
 
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { amount, reason, AgentReceiverId } = formData;
@@ -84,7 +64,6 @@ function TransfertForm() {
       navigate("/Transaction/Transfert");
     } catch (error) {
       console.error("Error creating transfer:", error);
-      setError(error.message);
     }
   };
 
@@ -118,6 +97,14 @@ function TransfertForm() {
       throw error;
     }
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <div className="flex justify-center mt-10">
@@ -161,20 +148,6 @@ function TransfertForm() {
             className="shadow-md rounded-md"
           />
         </div>
-        {/* <div className="grid gap-2">
-          <label htmlFor="AgentSenderId" className="text-gray-500 text-sm">
-            Agent Sender ID
-          </label>
-          <input
-            required
-            type="text"
-            id="AgentSenderId"
-            value={formData.AgentSenderId}
-            onChange={handleChange}
-            className="shadow-md rounded-md"
-          />
-        </div> */}
-
         <div className="grid">
           <button
             type="submit"
@@ -184,10 +157,10 @@ function TransfertForm() {
           </button>
         </div>
         <div>{error && <span>{error}</span>}</div>
-       
       </form>
     </div>
   );
 }
 
 export default TransfertForm;
+

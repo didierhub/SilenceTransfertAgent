@@ -1,41 +1,57 @@
-import { useEffect, useState } from "react";
-import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
-import { db } from "../firebase/FireBaseConfig";
+import { useState,useEffect } from "react";
+import { where, orderBy } from "firebase/firestore";
 import TransactionSearchBar from '../components/TransactionSearchBar';
 import UserHook from "../hooks/UserHook";
 import TransactionHook from "../hooks/TransactionHook";
 
 function Transfert() {
+  const [filteredData, setFilteredData] = useState([]);
    const collectionName="transfers"
-   const [transfers, setTransfers] = useState([]);
-   const {formatDate,fetchData}=TransactionHook()
+   const {formatDate,useFirestoreQuery}=TransactionHook()
    const {user}=UserHook()
-   const userId=user.uid
+   const AgentId=user.uid
+   const whereClause = where('AgentId', '==', AgentId); // Example where clause
+   const orderByClause = orderBy('createdAt', 'desc'); // Example order by clause
 
-  
+
+   //fetchingData
+   const { data, loading, error }= useFirestoreQuery(
+    collectionName, // collectionName
+    whereClause,
+    orderByClause , // whereClause
+   AgentId// orderByClause
+  );
 
   useEffect(() => {
-    const collectionRef = collection(db, collectionName);
-    const q = query(collectionRef, where("AgentId", "==", userId), orderBy("createdAt","desc"));
-
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const transfersData = snapshot.docs.map((doc) => {
-        const data = doc.data();
-       
-        const createdAt = data.createdAt ? data.createdAt.toDate() : null; // Convert Firestore Timestamp to JavaScript Date
-        return {
-          id: doc.id,
-          ...data,
-          createdAt,
-        };
-      });
-      setTransfers(transfersData);
+    setFilteredData(data); // update filteredTransfers when sendData changes
+  }, [data]);
+  
+  //handleSearch  function
+  const handleSearch = (searchTerm) => {
+      const lowerCaseTerm = searchTerm.toLowerCase();
+      const filtered = data.filter((transfer) => {
+      const reason = transfer.reason ? transfer.reason.toLowerCase() : '';
+      const amount = transfer.amount ? transfer.amount.toString().toLowerCase() : '';
+      const createdAt = transfer.createdAt ? formatDate(transfer.createdAt).toLowerCase() : '';
+      const AgentReceiverId=transfer.createdAt ? formatDate(transfer.createdAt).toLowerCase() : '';
+      
+      return (
+        reason.includes(lowerCaseTerm) ||
+        amount.includes(lowerCaseTerm) ||
+        AgentReceiverId.includes(lowerCaseTerm) ||
+        createdAt.includes(lowerCaseTerm)
+      );
     });
+    setFilteredData(filtered);
+  };
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
-    // Cleanup the listener on unmount
-    return () => unsubscribe();
-  }, [userId]);
 
 
 
@@ -46,10 +62,11 @@ function Transfert() {
         transactiontype="TransfertedData" 
         placeholder="search transferred" 
         path="/Transaction/TransfertForm" 
+        onSearch={handleSearch} 
       />
       <div className="relative">
         <div className="border gap-2 shadow-md grid lg:grid-cols-4 px-2 pt-4 absolute top-[50%] left-[50%] translate-x-[-50%] w-full h-[65vh] overflow-y-scroll">
-          {transfers.map((transfer) => (
+          {filteredData.map((transfer) => (
             <div key={transfer.id} className="grid gap-2 shadow-md p-2 hover:scale-[1.01] border border-gray-400 drop-shadow-md h-fit">
               <div className="text-red-500">Amount: ${transfer.amount}</div>
               <div className="relative overflow-hidden">Reason: {transfer.reason}</div>
@@ -60,7 +77,7 @@ function Transfert() {
           ))}
         </div>
       </div>
-      {console.log(transfers)}
+    
     </div>
   );
 }

@@ -1,70 +1,124 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import TransactionHook from "../hooks/TransactionHook";
 import UserHook from "../hooks/UserHook";
-import { useNavigate } from "react-router-dom";
-import Destination from "./Destination";
-import { inputFields } from "../data/inputFields" 
-import { FormInput,FormTextarea,SelectInput } from "./formInputAndTextArea";
+import { doc, updateDoc, where, orderBy } from 'firebase/firestore';
+import { db } from "../firebase/FireBaseConfig";
+import { sendInputFields } from "../data/inputFields";
+import { FormInput, FormTextarea, SelectInput } from "./formInputAndTextArea";
+import { calculateFeesAndTotal } from "../features/functions";
 
 function SendForm() {
-  const { CreatTransaction, UploadProof } = TransactionHook();
+  const { CreatTransaction, UploadProof, useFirestoreQuery } = TransactionHook();
   const { user } = UserHook();
-  const [error, setError] = useState(null);
+  const [AgentBalanceId, setAgentBalanceId] = useState("");
+  const [balance, setBalance] = useState(0); // Track the current balance
+  const [errorSend, setErrorSend] = useState(null);
   const [formData, setFormData] = useState({
-    amount: "",
-    reason: "",
+    amount: 0,
+    fees: 0,
+    totalAmount: 0,
     destination: "",
     paymentMethod: "",
+    accountDetails: {},
     image: null,
   });
   const collectionName = "sends";
+  const BalanceCollectionName = "balances";
   const storageName = "sendProof";
   const navigate = useNavigate();
   const AgentId = user.uid;
+  const whereClause = where('AgentId', '==', AgentId);
+  const orderByClause = orderBy('createdAt', 'desc');
 
-  
+
+  //fetching balance
+  const { data, loading, error } = useFirestoreQuery(
+    BalanceCollectionName,
+    whereClause,
+    undefined,
+    AgentId
+  );
+
+  useEffect(() => {
+    if (data && data.length > 0) {
+      setAgentBalanceId(data[0].id);
+      setBalance(data[0].Balance); // Assume Balance is a field in the document
+    }
+  }, [data]);
+
+  useEffect(() => {
+    const { fees, totalAmount } = calculateFeesAndTotal(formData.amount);
+
+    setFormData((prevData) => ({
+      ...prevData,
+      fees,
+      totalAmount,
+    }));
+  }, [formData.amount]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const { totalAmount, amount, destination, paymentMethod, accountDetails, fees } = formData;
+
+    if (isNaN(totalAmount) || totalAmount <= 0) {
+      setErrorSend("Please enter a valid amount.");
+      return;
+    }
 
     try {
       // Upload the image
       const photoURL = formData.image
         ? await UploadProof(formData.image, AgentId, storageName)
         : null;
+
+      // Check if the agent has sufficient balance
+      if (balance < totalAmount) {
+        setErrorSend("Insufficient balance.");
+        return;
+      }
+
       // Create the transaction after the image upload is complete
       const transactionData = {
-        amount: formData.amount,
-        reason: formData.reason,
-        destination: formData.destination,
-        paymentMethod: formData.paymentMethod,
+        totalAmount,
+        amount,
+        fees,
+        destination,
+        paymentMethod,
+        accountDetails,
         photoURL,
-        AgentId 
+        AgentId,
       };
-      
       await CreatTransaction(transactionData, collectionName);
-      
-       // Reset form fields
-       setFormData({
-        amount: "",
-        reason: "",
+
+      // Update the agent's balance
+      const AgentBalanceRef = doc(db, BalanceCollectionName, AgentBalanceId);
+      await updateDoc(AgentBalanceRef, { Balance: balance + totalAmount }); // Deduct the totalAmount
+
+      // Reset form fields
+      setFormData({
+        amount: 0,
+        fees: 0,
+        totalAmount: 0,
         destination: "",
         paymentMethod: "",
+        accountDetails: {},
         image: null,
       });
+
       // Navigate to the send page
       navigate("/Transaction/Send");
-      alert("sent successfully")
+      alert("Sent successfully");
     } catch (error) {
       console.error("Error creating transfer:", error);
-      setError(error.message);
+      setErrorSend(error.message);
     }
   };
 
   return (
     <div className="grid justify-center relative">
-      <form onSubmit={handleSubmit} className="grid gap-3 w-[350px] h-[70vh] absolute left-[50%] translate-x-[-50%] overflow-x-scroll">
-        {inputFields(formData, setFormData).map((field) => {
+      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3 w-[80%] h-auto absolute left-[50%] translate-x-[-50%] overflow-x-scroll">
+        {sendInputFields(formData, setFormData).map((field) => {
           if (field.type === "textarea") {
             return <FormTextarea key={field.id} {...field} />;
           } else if (field.type === "select") {
@@ -81,15 +135,13 @@ function SendForm() {
             Send
           </button>
         </div>
-        {error && <div className="text-red-500">{error}</div>}
-       
+        {errorSend && <div className="text-red-500">{errorSend}</div>}
       </form>
       {formData.image && (
-          <div className="w-[150px] absolute  left-[10%] ">
-            <img src={URL.createObjectURL(formData.image)} alt="Preview"  className="relative"/>
-          </div>
-        )}
-         {console.log(formData)}
+        <div className="w-[150px] absolute left-[10%]">
+          <img src={URL.createObjectURL(formData.image)} alt="Preview" className="relative" />
+        </div>
+      )}
     </div>
   );
 }
