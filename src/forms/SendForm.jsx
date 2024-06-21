@@ -38,7 +38,8 @@ function SendForm() {
     whereClause,
     undefined,
     AgentId
-  );
+  ); 
+  
 
   useEffect(() => {
     if (data && data.length > 0) {
@@ -117,7 +118,7 @@ function SendForm() {
 
   return (
     <div className="grid justify-center relative">
-      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3 w-[80%] h-auto absolute left-[50%] translate-x-[-50%] overflow-x-scroll">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1  md:grid-cols-2 gap-3 w-[80%]  max-h-[70vh]  absolute left-[50%] translate-x-[-50%] overflow-x-scroll">
         {sendInputFields(formData, setFormData).map((field) => {
           if (field.type === "textarea") {
             return <FormTextarea key={field.id} {...field} />;

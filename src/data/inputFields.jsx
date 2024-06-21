@@ -1,7 +1,7 @@
 export const sendInputFields = (formData, setFormData) => [
   
   {
-    label: "Amount",
+    label: " to send Amount",
     id: "amount",
     type: "number",
     required: true,

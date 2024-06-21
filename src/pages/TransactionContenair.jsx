@@ -7,7 +7,7 @@ function TransactionContenair() {
 
 
     
-    <div className="grid lg:grid-cols-4 gap-4 px-4 items-center h-[100%] text-center ">
+    <div className="grid grid-cols-2  md:grid-cols-4 gap-x-4 gap-y-2 px-4 items-center h-[60%] text-center relative top-[20%]  ">
 
       {transactionData.map(transaction=>(
         <NavLink

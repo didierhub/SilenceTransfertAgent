@@ -1,5 +1,8 @@
 import { useState,useEffect } from "react";
 import { where, orderBy } from "firebase/firestore";
+import { MdOutlineSendToMobile } from "react-icons/md";
+import { IoPersonCircleOutline } from "react-icons/io5";
+import { FaLongArrowAltRight } from "react-icons/fa";
 import TransactionSearchBar from '../components/TransactionSearchBar';
 import UserHook from "../hooks/UserHook";
 import TransactionHook from "../hooks/TransactionHook";
@@ -70,8 +73,12 @@ function Transfert() {
             <div key={transfer.id} className="grid gap-2 shadow-md p-2 hover:scale-[1.01] border border-gray-400 drop-shadow-md h-fit">
               <div className="text-red-500">Amount: ${transfer.amount}</div>
               <div className="relative overflow-hidden">Reason: {transfer.reason}</div>
-              <div className="text-red-500">AgentReceiver ID: {transfer.AgentSenderId}</div>
-              <div className="text-green-500">AgentReceiver ID: {transfer.AgentReceiverId}</div>
+              <div className="flex justify-between items-center ">  
+                <div className="text-red-500 flex items-center ">{transfer.AgentSenderId} <IoPersonCircleOutline/></div>
+                <div className="flex items-center justify-between"> <FaLongArrowAltRight /> <FaLongArrowAltRight /> <FaLongArrowAltRight /> </div>
+               <div className="text-green-500 flex items-center "> <IoPersonCircleOutline />{transfer.AgentReceiverId}</div> 
+              </div>
+             
               <div className="text-gray-500 text-sm"> {formatDate(transfer.createdAt)}</div>
             </div>
           ))}

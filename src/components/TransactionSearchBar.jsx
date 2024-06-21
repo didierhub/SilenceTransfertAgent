@@ -10,8 +10,8 @@ function TransactionSearchBar(props) {
   };
 
   return (
-    <div className='grid grid-cols-3 p-2 border items-center'>
-      <h1>{props.transactiontype}</h1>
+    <div className='grid md:grid-cols-3 p-2 border items-center gap-y-2'>
+      <h1 className='hidden md:block'>{props.transactiontype}</h1>
       <div className='bg-gray-200 grid items-center grid-cols-12 gap-0 rounded-md px-1'>
         <label className="col-span-1" htmlFor="search"><IoMdSearch /></label>
         <input 

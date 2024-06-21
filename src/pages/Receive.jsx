@@ -24,7 +24,7 @@ function Receive() {
     whereClause , // whereClause
     orderByClause, AgentId// orderByClause
   );
-  {console.log(data)}
+ 
 
 
   useEffect(() => {
@@ -44,7 +44,7 @@ function Receive() {
        createdAt.includes(lowerCaseTerm)
      );
    });
-   setFilteredTransfers(filtered);
+   setFilteredData(filtered);
  };
 
 
@@ -68,9 +68,11 @@ if (error) {
       <div className="relative">
         <div className="border gap-2 shadow-md grid lg:grid-cols-4 px-2 pt-4 absolute top-[50%] left-[50%] translate-x-[-50%] w-full h-[65vh] overflow-y-scroll">
           {filteredData.map((transfer) => (
-            <div key={transfer.id} className="grid  grid-rows-6 gap-2  shadow-md p-2 hover:scale-[1.01] border border-gray-400 drop-shadow-md h-[200px]">
+            <div key={transfer.id} className="grid  grid-rows-6 gap-2  shadow-md p-2 hover:scale-[1.01] border border-gray-400 drop-shadow-md h-[250px]">
                <div className=" row-span-3"><img src={transfer.photoURL} alt="Photo"  className="h-full w-full object-cover"/></div>
-              <div className="relative overflow-hidden  ">Reason: {transfer.reason}</div>
+              <div className="relative overflow-hidden  ">receiverName: {transfer.receiverName}</div>
+              <div className="relative overflow-hidden  ">amountTogive: ${transfer.amountTogive}</div>
+              <div className="relative overflow-hidden  ">  withdrawMethod: {transfer.withdrawMethod}</div>
               <div className="text-gray-500 text-sm  "> {formatDate(transfer.createdAt)}</div>
             </div>
           ))}
