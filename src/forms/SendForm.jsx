@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { doc, getDoc, updateDoc, where, orderBy } from 'firebase/firestore';
+import { db } from "../firebase/FireBaseConfig";
 import TransactionHook from "../hooks/TransactionHook";
 import UserHook from "../hooks/UserHook";
-import { doc, updateDoc, where, orderBy } from 'firebase/firestore';
-import { db } from "../firebase/FireBaseConfig";
 import { sendInputFields } from "../data/inputFields";
 import { FormInput, FormTextarea, SelectInput } from "./formInputAndTextArea";
 import { calculateFeesAndTotal } from "../features/functions";
@@ -31,15 +31,15 @@ function SendForm() {
   const whereClause = where('AgentId', '==', AgentId);
   const orderByClause = orderBy('createdAt', 'desc');
 
+  const { id } = useParams(); // Get the transaction ID from the URL
 
-  //fetching balance
+  // Fetch agent's balance
   const { data, loading, error } = useFirestoreQuery(
     BalanceCollectionName,
     whereClause,
     undefined,
     AgentId
-  ); 
-  
+  );
 
   useEffect(() => {
     if (data && data.length > 0) {
@@ -49,6 +49,23 @@ function SendForm() {
   }, [data]);
 
   useEffect(() => {
+    // Fetch existing transaction data if editing
+    if (id) {
+      const fetchTransaction = async () => {
+        const docRef = doc(db, collectionName, id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setFormData(docSnap.data());
+        } else {
+          console.log("No such document!");
+        }
+      };
+      fetchTransaction();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    // Calculate fees and total amount whenever amount changes
     const { fees, totalAmount } = calculateFeesAndTotal(formData.amount);
 
     setFormData((prevData) => ({
@@ -68,7 +85,7 @@ function SendForm() {
     }
 
     try {
-      // Upload the image
+      // Upload the image if provided
       const photoURL = formData.image
         ? await UploadProof(formData.image, AgentId, storageName)
         : null;
@@ -79,7 +96,7 @@ function SendForm() {
         return;
       }
 
-      // Create the transaction after the image upload is complete
+      // Construct transaction data
       const transactionData = {
         totalAmount,
         amount,
@@ -89,14 +106,23 @@ function SendForm() {
         accountDetails,
         photoURL,
         AgentId,
+        status: 'pending'
       };
-      await CreatTransaction(transactionData, collectionName);
 
-      // Update the agent's balance
-      const AgentBalanceRef = doc(db, BalanceCollectionName, AgentBalanceId);
-      await updateDoc(AgentBalanceRef, { Balance: balance + totalAmount }); // Deduct the totalAmount
+      if (id) {
+        // Update existing transaction
+        const docRef = doc(db, collectionName, id);
+        await updateDoc(docRef, transactionData);
+      } else {
+        // Create new transaction
+        await CreatTransaction(transactionData, collectionName);
 
-      // Reset form fields
+        // Deduct the totalAmount from agent's balance after successful transaction
+        const AgentBalanceRef = doc(db, BalanceCollectionName, AgentBalanceId);
+        await updateDoc(AgentBalanceRef, { Balance: balance - totalAmount });
+      }
+
+      // Reset form fields and state
       setFormData({
         amount: 0,
         fees: 0,
@@ -106,10 +132,11 @@ function SendForm() {
         accountDetails: {},
         image: null,
       });
+      setErrorSend(null);
 
       // Navigate to the send page
       navigate("/Transaction/Send");
-      alert("Sent successfully");
+      alert(id ? "Transaction updated successfully" : "Sent successfully");
     } catch (error) {
       console.error("Error creating transfer:", error);
       setErrorSend(error.message);
@@ -118,7 +145,7 @@ function SendForm() {
 
   return (
     <div className="grid justify-center relative">
-      <form onSubmit={handleSubmit} className="grid grid-cols-1  md:grid-cols-2 gap-3 w-[80%]  max-h-[70vh]  absolute left-[50%] translate-x-[-50%] overflow-x-scroll">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3 w-[80%] max-h-[70vh] absolute left-[50%] translate-x-[-50%] overflow-x-scroll">
         {sendInputFields(formData, setFormData).map((field) => {
           if (field.type === "textarea") {
             return <FormTextarea key={field.id} {...field} />;
@@ -133,7 +160,7 @@ function SendForm() {
             type="submit"
             className="px-3 py-1 bg-green-500 hover:scale-105 shadow-md rounded-md text-white font-semibold"
           >
-            Send
+            {id ? "Update" : "Send"}
           </button>
         </div>
         {errorSend && <div className="text-red-500">{errorSend}</div>}

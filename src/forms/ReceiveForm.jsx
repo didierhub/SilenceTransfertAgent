@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { doc, getDoc, updateDoc, where, orderBy } from 'firebase/firestore';
+import { db } from "../firebase/FireBaseConfig";
 import TransactionHook from "../hooks/TransactionHook";
 import UserHook from "../hooks/UserHook";
-import { doc, updateDoc, where, orderBy } from 'firebase/firestore';
-import { db } from "../firebase/FireBaseConfig";
 import { receiveInputFields } from "../data/inputFields";
 import { FormInput, FormTextarea, SelectInput } from "./formInputAndTextArea";
 
@@ -11,10 +11,10 @@ function ReceiveForm() {
   const { CreatTransaction, UploadProof, useFirestoreQuery } = TransactionHook();
   const { user } = UserHook();
   const [AgentBalanceId, setAgentBalanceId] = useState("");
-  const [balance, setBalance] = useState(0); // Track the current balance
+  const [balance, setBalance] = useState(0);
   const [errorReceive, setErrorReceive] = useState(null);
   const [formData, setFormData] = useState({
-    amountTogive:0,
+    amountTogive: 0,
     receiverName: '',
     phoneNumber: '',
     email: '',
@@ -25,6 +25,7 @@ function ReceiveForm() {
     bankDetails: { ibam: '', accountName: '', bank: '' },
   });
 
+  const { id } = useParams(); // Get the transaction ID from the URL
   const collectionName = "receives";
   const BalanceCollectionName = "balances";
   const storageName = "receiveFolder";
@@ -47,14 +48,33 @@ function ReceiveForm() {
     }
   }, [data]);
 
+  useEffect(() => {
+    if (id) {
+      const fetchTransaction = async () => {
+        const docRef = doc(db, collectionName, id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setFormData(docSnap.data());
+        } else {
+          console.log("No such document!");
+        }
+      };
+      fetchTransaction();
+    }
+  }, [id]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { receiverName, phoneNumber, email, receivedMethod, paymentMethod, withdrawMethod, bankDetails,amountTogive } = formData;
+    const { receiverName, phoneNumber, email, receivedMethod, paymentMethod, withdrawMethod, bankDetails, amountTogive } = formData;
+
+    if (!receiverName || !phoneNumber || !email || !receivedMethod || !paymentMethod || amountTogive <= 0) {
+      setErrorReceive("All fields are required and amount must be greater than 0");
+      return;
+    }
 
     try {
       const photoURL = formData.image ? await UploadProof(formData.image, AgentId, storageName) : null;
 
-      // Create the transaction after the image upload is complete
       const transactionData = {
         receiverName,
         phoneNumber,
@@ -66,13 +86,22 @@ function ReceiveForm() {
         bankDetails,
         photoURL,
         AgentId,
+        status: 'pending'
       };
-      await CreatTransaction(transactionData, collectionName);
-      const AgentBalanceRef = doc(db, BalanceCollectionName, AgentBalanceId);
-      await updateDoc(AgentBalanceRef, { Balance: balance - amountTogive }); // Deduct the totalAmount
-      // Reset form fields
+
+      if (id) {
+        // Update existing transaction
+        const docRef = doc(db, collectionName, id);
+        await updateDoc(docRef, transactionData);
+      } else {
+        // Create new transaction
+        await CreatTransaction(transactionData, collectionName);
+        const AgentBalanceRef = doc(db, BalanceCollectionName, AgentBalanceId);
+        await updateDoc(AgentBalanceRef, { Balance: balance - amountTogive });
+      }
+
       setFormData({
-        amountTogive:0,
+        amountTogive: 0,
         receiverName: '',
         phoneNumber: '',
         email: '',
@@ -82,21 +111,20 @@ function ReceiveForm() {
         withdrawMethod: '',
         bankDetails: { ibam: '', accountName: '', bank: '' },
       });
-      
+
       setErrorReceive(null);
 
-      // Navigate to the receive page
       navigate("/Transaction/Receive");
-      alert("Received successfully");
+      alert(id ? "Transaction updated successfully" : "Received successfully");
     } catch (error) {
       console.error("Error creating receive:", error);
-      setErrorReceive(error.message);
+      setErrorReceive("Failed to create transaction. Please try again.");
     }
   };
 
   return (
     <div className="grid justify-center relative">
-      <form onSubmit={handleSubmit} className="grid grid-cols-1  md:grid-cols-2 gap-3 w-[80%]  max-h-[70vh] absolute left-[50%] translate-x-[-50%] overflow-x-scroll">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3 w-[80%] max-h-[70vh] absolute left-[50%] translate-x-[-50%] overflow-x-scroll">
         {receiveInputFields(formData, setFormData).map((field) => {
           if (field.type === "textarea") {
             return <FormTextarea key={field.id} {...field} />;
@@ -106,13 +134,13 @@ function ReceiveForm() {
             return <FormInput key={field.id} {...field} />;
           }
         })}
-        
+
         <div className="grid">
           <button
             type="submit"
             className="px-3 py-1 bg-green-500 hover:scale-105 shadow-md rounded-md text-white font-semibold"
           >
-            Receive
+            {id ? "Update" : "Receive"}
           </button>
         </div>
         {errorReceive && <div className="text-red-500">{errorReceive}</div>}

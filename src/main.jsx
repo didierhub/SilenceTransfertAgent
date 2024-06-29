@@ -46,8 +46,10 @@ const router= createBrowserRouter(
       <Route path='Transfert' element={<Transfert/>} />
       <Route path='Send' element={<Send/>} />
       <Route path='Receive' element={<Receive/>} />
-      <Route path='ReceiveForm' element={<ReceiveForm/>} />
+      <Route path='ReceiveForm/' element={<ReceiveForm/>} />
+      <Route path='ReceiveForm/:id' element={<ReceiveForm/>} />
       <Route path='SendForm' element={<SendForm/>} />
+      <Route path='SendForm/:id' element={<SendForm/>} />
       <Route path='TransfertForm' element={<TransfertForm/>} />
       <Route path='Review' element={<Review/>}/>
       </Route>

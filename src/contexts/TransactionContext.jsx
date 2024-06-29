@@ -1,5 +1,5 @@
 import { Auth,db,Storage } from "../firebase/FireBaseConfig";
-import { collection, addDoc, serverTimestamp,query,onSnapshot, } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp,query,onSnapshot,updateDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { createContext,useEffect,useState } from "react";
 import UserHook from "../hooks/UserHook";
@@ -104,6 +104,18 @@ const useFirestoreQuery = (collectionName, whereClause, orderByClause, UserId) =
 
 
 
+const handleStatusChange = async (transactionId, newStatus,collectionName) => {
+  try {
+    const transactionRef = doc(db, collectionName, transactionId);
+    await updateDoc(transactionRef, { status: newStatus });
+    // Optionally update local state to reflect the change immediately
+  } catch (error) {
+    console.error("Error updating status:", error);
+    // Handle error updating status
+  }
+};
+
+
 
 const formatDate = (date) => {
   if (!date) return 'Unknown Date';
@@ -176,7 +188,7 @@ const UploadProof = (image, userId, FolderName) => {
 
 
     return(
-        <TransactionContext.Provider value={{CreatTransaction,UploadProof,fetchData,formatDate,useFirestoreQuery}}>
+        <TransactionContext.Provider value={{CreatTransaction,UploadProof,fetchData,formatDate,useFirestoreQuery,handleStatusChange}}>
           {children}
         </TransactionContext.Provider>
     )
