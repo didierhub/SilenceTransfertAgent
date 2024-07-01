@@ -6,13 +6,10 @@ import CityBarChart from '../Charts/CityBarChart'
 
 function CardContenairLeft() {
   return (
-    <div className='col-span-1  grid grid-rows-10 gap-2 '>
+    <div className=' grid gap-2'>
       
-            {/* top agent */}
-             <TopAgentsConteniarAgentsConteniar />
-            {/* top city */}
-          
-           <TopCityContenair />
+      <TopCityContenair />
+      <TopCityContenair />
     </div>
   )
 }

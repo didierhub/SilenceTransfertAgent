@@ -41,7 +41,7 @@ function TopAgent() {
     <>
         {
             agents.map(agent=>(
-                <div key={agent.id}  className='shadow flex justify-between items-center p-1 rounded border'>
+                <div key={agent.id}  className=''>
                     <div>
                     <img src={agent.image} alt=""  className='w-10 h-10  object-cover rounded-full' />
                    <span className='text-sm text-gray-600' >{agent.name}</span>

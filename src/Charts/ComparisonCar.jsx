@@ -32,7 +32,7 @@ const data = [
 
 function ComparisonCar() {
   return (
-    <div    className='  col-span-3 border shadow-md rounded row-span-1   grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 p-4  ' >
+    <div    className='  col-span-3 border shadow-md rounded row-span-1   grid  gap-3  lg:grid-cols-3 p-4 items-center  ' >
         
         
         {data.map((item) => (

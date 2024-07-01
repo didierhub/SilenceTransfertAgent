@@ -144,8 +144,8 @@ function SendForm() {
   };
 
   return (
-    <div className="grid justify-center relative">
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3 w-[80%] max-h-[70vh] absolute left-[50%] translate-x-[-50%] overflow-x-scroll">
+    <div className="h-full w-full flex justify-center items-center self-center  relative ">
+      <form onSubmit={handleSubmit}  className="grid grid-cols-1 md:grid-cols-2 gap-3 w-[90%] overflow-y-scroll  justify-center self-center ">
         {sendInputFields(formData, setFormData).map((field) => {
           if (field.type === "textarea") {
             return <FormTextarea key={field.id} {...field} />;
@@ -155,21 +155,26 @@ function SendForm() {
             return <FormInput key={field.id} {...field} />;
           }
         })}
-        <div className="grid">
+        {formData.image && (
+          <div className="h-50px w-full flex border-2 shadow-md p-1 justify-center">
+            <img
+              src={URL.createObjectURL(formData.image)}
+              alt="Preview"
+              className="relativ h-40 w-full  object-cover"
+            />
+          </div>
+        )}
+        <div  className="flex justify-center items-center">
           <button
             type="submit"
-            className="px-3 py-1 bg-green-500 hover:scale-105 shadow-md rounded-md text-white font-semibold"
+            className="px-4 py-2 bg-green-500 hover:scale-105 shadow-md rounded-md text-white font-semibold"
           >
             {id ? "Update" : "Send"}
           </button>
         </div>
         {errorSend && <div className="text-red-500">{errorSend}</div>}
       </form>
-      {formData.image && (
-        <div className="w-[150px] absolute left-[10%]">
-          <img src={URL.createObjectURL(formData.image)} alt="Preview" className="relative" />
-        </div>
-      )}
+      
     </div>
   );
 }

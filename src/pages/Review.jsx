@@ -32,7 +32,7 @@ function Review() {
  
   
   return (
-    <div className="grid grid-cols-4 items-center h-[70vh] grid-center gap-4 px-4">
+    <div className=" h-full grid md:grid-cols-2 lg:grid-cols-4 items-center justify-center   gap-4 px-4">
       <div className="border h-[200px] shadow-md">
       {data.map((balanceItem) => (
         <div key={balanceItem.id} className=" grid  py-2">

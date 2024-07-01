@@ -12,7 +12,7 @@ const valueFormatter = (number) =>
 
 function CardContenairRight() {
   return (
-    <div className='col-span-1  grid grid-rows-10 gap-2 '>
+    <div className='grid gap-2 '>
     {/* top transfert way */}
     <DonutChartUsageExample />
    

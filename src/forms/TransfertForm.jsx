@@ -107,8 +107,8 @@ function TransfertForm() {
   }
 
   return (
-    <div className="flex justify-center mt-10">
-      <form onSubmit={handleSubmit} className="grid gap-3 w-[350px] h-[300px]">
+    <div className="flex  items-center h-full  justify-center">
+      <form onSubmit={handleSubmit} className="grid gap-3 w-[350px] h-[300px] ">
         <div className="grid gap-2">
           <label htmlFor="amount" className="text-gray-500 text-sm">
             Amount to transfer

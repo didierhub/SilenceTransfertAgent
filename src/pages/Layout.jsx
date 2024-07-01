@@ -11,11 +11,14 @@ import LogIn from '../forms/LogIn'
 function Layout() {
   const {user}=UserHook()
   return (
-     <div className=' grid grid-cols-12  grid-rows-16 h-screen w-screen bg-[#F7F9F8]  fixed'>
+     <div className=' '>
      {user ? <> 
       <Header />
+      <div className='grid grid-cols-7  gap-x-2 absolute top-20 overflow-y-scroll overflow-x-hidden min-h-[90vh] w-full scroll-hidden '>
       <SideBard />
-      <OutletContenair />
+      <OutletContenair />   
+      </div>
+      
       </>
       :<LogIn />}
       

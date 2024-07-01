@@ -49,7 +49,7 @@ const dataFormatter = (number) =>
 
 
 
-<div className='relative  
+<div className='relative   border
 '>
 
 

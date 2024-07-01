@@ -11,14 +11,14 @@ import React from 'react';
       value={value}
       onChange={onChange}
       required={required}
-      className="shadow-md  bg-transparent  rounded-md  pl-2 border-b-2 border-0 "
+      className="shadow-md  bg-transparent  rounded-md  pl-2 border   "
       placeholder={placeholder}
     />
   </div>
 );
 
  const FormTextarea = ({ label, id, rows, value, onChange, required, placeholder }) => (
-  <div className="grid gap-2">
+  <div className="grid gap-y-2 ">
     <label htmlFor={id} className="text-gray-500 text-sm">
       {label}
     </label>
@@ -29,14 +29,14 @@ import React from 'react';
       onChange={onChange}
       required={required}
       placeholder={placeholder}
-      className=" shadow-md  bg-transparent rounded-md border-0  border-b-2 "
+      className=" shadow-md  bg-transparent rounded-md border "
     ></textarea>
   </div>
 );
 
 const SelectInput = ({ label, id, value, onChange, required, options }) => {
     return (
-      <div className="grid gap-2">
+      <div className="grid gap-y-2 ">
         <label htmlFor={id} className="text-gray-500 text-sm">
           {label}
         </label>
@@ -45,7 +45,7 @@ const SelectInput = ({ label, id, value, onChange, required, options }) => {
           value={value}
           onChange={onChange}
           required={required}
-          className="shadow-md rounded-md"
+          className="shadow-md rounded-md "
         >
           <option value="">Select an option</option>
           {options.map((option) => (

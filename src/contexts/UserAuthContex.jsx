@@ -151,12 +151,22 @@ const createBalance = (documentName, customId,data,) => {
     createdAt: serverTimestamp(), // Include createdAt with server timestamp
   });
 };
+
+
+
+
+const [menu,setMenu]=useState(true)
+
+  const handleMenu=()=>{
+    setMenu(prev=>!prev)
+  }
   return (
     // context provider
     <UserAuthContext.Provider
       value={{ 
         user,
         isAdmin,
+        menu,
         UserLogInWithEmailAndPassword,
          UserLogInWithGoogle,
           DeleteAgent,
@@ -165,7 +175,8 @@ const createBalance = (documentName, customId,data,) => {
           UploadUserPhoto,
           uploadUserInfo,
           formatDate,
-          createBalance}}
+          createBalance,
+          handleMenu}}
     >
       {children}
     </UserAuthContext.Provider>

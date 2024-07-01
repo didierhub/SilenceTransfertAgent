@@ -4,8 +4,7 @@ import ComparisonCar from '../Charts/ComparisonCar'
 
 function CardContenairCenter() {
   return (
-    <div className='col-span-2  grid grid-cols-3 grid-rows-3 gap-4  
-    '>
+    <div className='col-span-2  grid grid-cols-3 gap-2    '>
        
        <ComparisonCar />
         
